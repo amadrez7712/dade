@@ -1,0 +1,41 @@
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+#------------------------------------------------------------------------------------
+#حذف داده های خالی از ستون ها
+#df_num=df_num.dropna(subset="[total_rooms"])  #حذف سطر
+#df_num.drop("total_rooms",axis)               #حذف ستون
+#median=df_num["total_rooms"].median()         #مقدار خالی را با مقدار وسطی جایگزین میکند
+#df_num["total_rooms"].fillno(median)
+#------------------------------------------------------------------------------------
+#باید فاصله بین مینیمم و ماکسیمم را کم کنیم
+#هر مقدار را منهای مقدار میانگین میکنیم و تقسیم بر واریانس میکنیم 
+
+fetur_scel=StandardScaler()
+data_num_scaled_tr=pd.DataFrame(feature_scel.fit_transform(data_custom_tr.values),columns=data_custom_tr.columns)
+data_num_scaled_tr.head()
+
+#-------------------------------------------------------------------------------------
+#داده ها رو به صورت 0 و 1 میزاریم
+  
+    #این الگریتم داده ها را به صورت 0و 1 قرار میدهد و داده های ما را دچار اشتباه میکند
+    
+#encoder=LabelEncoder()
+#data_cat=df["ocean_proximity"]
+#data_cat_encoded=encoder.fit_transform(data_cat)          #داده ها را که به صورت متن بودن میگیره و به عدد تبدیل می کند
+#data_cat_encoded=pd.DataFrame(data_cat_encoded,columns=["ocean_proximity"])
+#data_cat_encoded.head()
+
+#--------------------------------------------------------------------------------------
+#این روش برای گروه های با تعداد بالا بهتر است
+#پنج ستون میسازیم برای داده های متنی که در داده ها داریم و به هر کدام یک مقدار میدهیم
+encoder_hot=OneHotEncoder(sparse=false)      #sparseاپشنی است که همه را  صفر در نظر نگیرد
+data_cat_hot_tmp=encoder_hot.fit_transform(df["ocean_proximity"])
+data_cat_hot=pd.DataFrame(data_cat_hot_tmp)
+data_cat_hot.columns=encoder_hot.get_feature_names(["prox"])
+#---------------------------------------------------------------------------------------
+#دیتا های عددی که ساختیم به داده های قبلی اضافه میکنیم 
+final=pd.concat([data_num_scaled_tr,data_cat_hot],axis=1)
+final.head()
+#-----------------------------------------------------------------------------------------

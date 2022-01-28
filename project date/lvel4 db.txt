@@ -1,0 +1,57 @@
+#پاکسازی و ساماندهی داده ها
+#حذف دو ستون median_house_value و ocean_proximity     
+
+df=train_set.copy()
+df_labl=df["median_house_value"].copy
+df_num=df.drop("median_house_value",axis=1)
+df_num=df.drop("ocean_proximity",axis=1)
+#---------------------------------
+
+#پرکردن جاهای خالی با مقدار وسطی به روش درست 
+imputer=SimpleImputer(missing_values=np.nan,strategy='median')     #non=not a number
+imputer.fit(df_num)
+x=imputer.transform(df_num)    #transform=تغییر شکل بر اساس خط قبلی یا تبدیل
+df_num_imputer_tr=pd.DataFrame(x,columns=df_num.columns)
+#------------------------------------------
+#کلاسی که ردیف برای ما بسازد
+rooms_ix,bedrooms_ix,population_ix,household_ix=3,4,5,6
+
+class ComboinAttributesAdder(BaseEstimator,TransformerMixin):
+        def fit(self,x,y=None):
+            return self
+        def transform(self,x,y=None):
+            rooms_per_household=x[:,rooms_ix]/x[:,household_ix]
+            population_perhousehold=x[:,population_ix]/x[:,household_ix]
+            bedrooms_per_room=x[:,bedrooms_ix]/x[:,room_ix]
+            return np.c_[x,rooms_per_household,population_perhousehold,bedrooms_per_room]
+        
+ComboinAttributesAdder()
+data_custom_tr_tmp=custom.transform(df_num_impute_tr.values)
+data_castom_tr=pd.DataFrame(data_custom_tr_tmp)
+columns=list(df_num_impute_tr.columns)
+columns.append("rooms_per_household")
+columns.append("population_perhousehold")
+columns.append("bedrooms_per_room")
+data_custom_tr.columns=columns
+data_custom_tr.head(10)
+#------------------------------------------------------------------------------------
+#باید فاصله بین مینیمم و ماکسیمم را کم کنیم
+#هر مقدار را منهای مقدار میانگین میکنیم و تقسیم بر واریانس میکنیم 
+
+fetur_scel=StandardScaler()
+data_num_scaled_tr=pd.DataFrame(feature_scel.fit_transform(data_custom_tr.values),columns=data_custom_tr.columns)
+data_num_scaled_tr.head()
+
+#-------------------------------------------------------------------------------------
+#داده ها رو به صورت 0 و 1 میزاریم
+#این روش برای گروه های با تعداد بالا بهتر است
+#پنج ستون میسازیم برای داده های متنی که در داده ها داریم و به هر کدام یک مقدار میدهیم
+encoder_hot=OneHotEncoder(sparse=false)      #sparseاپشنی است که همه را  صفر در نظر نگیرد
+data_cat_hot_tmp=encoder_hot.fit_transform(df["ocean_proximity"])
+data_cat_hot=pd.DataFrame(data_cat_hot_tmp)
+data_cat_hot.columns=encoder_hot.get_feature_names(["prox"])
+#---------------------------------------------------------------------------------------
+#دیتا های عددی که ساختیم به داده های قبلی اضافه میکنیم 
+final=pd.concat([data_num_scaled_tr,data_cat_hot],axis=1)
+final.head()
+#-----------------------------------------------------------------------------------------

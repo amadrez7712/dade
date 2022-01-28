@@ -1,0 +1,49 @@
+#استفاده از کلاس پایپلاین برای اینکه گروهی از دستوراتی که ما میدیم روی داده های جدید اجرا کند
+#مانند قبل سه ستون تاثیر گزار را وارد داده ها میکنیم 
+rooms_ix,bedrooms_ix,population_ix,household_ix=3,4,5,6
+class ComboinAttributesAdder(BaseEstimator,TransformerMixin):
+        def fit(self,x,y=None):
+            return self
+        def transform(self,x,y=None):
+            rooms_per_household=x[:,rooms_ix]/x[:,household_ix]
+            population_perhousehold=x[:,population_ix]/x[:,household_ix]
+            bedrooms_per_room=x[:,bedrooms_ix]/x[:,room_ix]
+            return np.c_[x,rooms_per_household,population_perhousehold,bedrooms_per_room]
+#داده های عددیو غیر عدیدی را جدا میکند در واقع ستون های عدیدی را میکشیم بیرون 
+class DataFrameSelector(BaseEstimator,TransformerMixin):
+    def __init__(self,attribute_names):
+        self.attribute_names=attribute_names
+    def fit(self,x,y=None):
+        return self
+    def transform(self,x):
+        return x[self.attribute_names].values
+#ستون رشته را حذف میکنیم و بقیه داده هارو میریزم تو df متغیر
+df=train_set.copy()
+df_label=df["median_house_value"].copy()
+df=df.drop("median_house_value",axis=1)
+df_num=df.drop(["ocean_proximity"],axis=1)
+num_attres= list(df_num)  #این تابع اسم ستون های عدیدی را میده
+cat_attres=["ocean_proximity"] #ارایه ای که ستون متنی توی اون هست
+#باید ستون عددی بگیره و از کل داده ها فقط ستون های که مشخص کردیم پیدا میکنه 
+#مدین را پیدا میکند
+num_pipeline=Pipeline([
+     ('selector',DataFrameSelector(num_attres)),
+     ('imputer',SimpleImputer(missing_values=np.nan,strategy='median')),
+     ('attribs_adder',ComboinAttributesAdder()),
+     ('std_scaler',StandardScaler())
+     ])
+
+cat_pipeline=Pipeline([
+    ('selector',DataFrameSelector(cat_attres)),
+    ('one_hot_encoder',OneHotEncoder(sparse=False))
+    ])
+#ترکیبی از دو تابع بالا درست میکنیم
+full_pipeline=FeatureUnion(transformer_list=[
+    ("num_pipeline",num_pipeline),
+    ("cat_pipeline",cat_pipeline)
+    ])
+housing_perpared=full_pipeline.fit_transform(df)
+housing_perpared_df=pd.DataFrame(housing_perpared,columns=[
+    'longitude','latitude','housing_median_age','total_rooms','total_bedrooms','population',
+    'households','median_income','rooms_per_household','population_perhousehold','bedrooms_per_room', 
+    ])#این کلاس امکان این رو به ما میده که داده های متنی را به داده های عددی بدون ارتباط به هم تبدیل کنیم و صتون های جدید که خودمون ساختیم را به داده ها اضافه کنیم
